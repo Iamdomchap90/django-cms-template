@@ -1,0 +1,62 @@
+---
+name: Build & Test
+
+on:
+    pull_request:
+      branches:
+        - main
+        - develop
+
+jobs:
+  setup:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout Repo.
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.PAT }}
+
+      - name: Install CookieCutter.
+        run: |
+          python3 -m pip install --user cookiecutter
+
+      - name: Run Cookiecutter.
+        run: |
+          python3 -m cookiecutter . -o "example-client" --no-input \
+          client_name="Example Client" \
+          repo="example-client" \
+          live_domain="example.com"
+
+      - name: Clear PWD.
+        run: |
+          rm -f cookiecutter.json
+          rm -f Makefile
+          rm -f README.md
+          rm -rf .github/
+          rm -rf '{{ cookiecutter.repo }}/'
+      
+      - name: Move the generated files into PWD.
+        run: |
+          shopt -s dotglob
+          mv example-client/example-client/* .
+          rm -rf "example-client"
+        
+      - name: Build Container
+        run: |
+          docker compose build test
+
+      - name: Build Coverage File 
+        run: docker compose run test make ci-test
+
+      - name: Write Coverage Report Comment
+        id: coverage_comment
+        if: always()
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          pytest-coverage-path: pytest-coverage.txt
+          junitxml-path: pytest.xml
+
+      - name: Stop Containers
+        if: always()
+        run: docker compose stop

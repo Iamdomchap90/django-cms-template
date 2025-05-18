@@ -1,0 +1,16 @@
+#
+---
+name: Build & Test
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build-and-test:
+    name: Build & Run Pytest
+    uses: Iamdomchap90/github-actions/.github/workflows/build-test.yml@main
+
+#

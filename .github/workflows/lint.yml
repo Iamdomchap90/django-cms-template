@@ -1,0 +1,73 @@
+---
+name: Build & Test
+
+on:
+    pull_request:
+      branches:
+        - main
+        - develop
+
+jobs:
+  setup:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout Repo.
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.PAT }}
+
+      - name: Install CookieCutter.
+        run: |
+          python3 -m pip install --user cookiecutter
+
+      - name: Run Cookiecutter.
+        run: |
+          python3 -m cookiecutter . -o "example-client" --no-input \
+          client_name="Example Client" \
+          repo="example-client" \
+          live_domain="example.com"
+
+      - name: Clear PWD.
+        run: |
+          rm -f cookiecutter.json
+          rm -f Makefile
+          rm -f README.md
+          rm -rf .github/
+          rm -rf '{{ cookiecutter.repo }}/'
+
+      - name: Move the generated files into PWD.
+        run: |
+          shopt -s dotglob
+          mv example-client/example-client/* .
+          rm -rf "example-client"
+    
+      - name: Load Cached Dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Setup Python Environment
+        uses: actions/setup-python@main
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Install Linters
+        run: pip install black isort
+
+      - name: Run Isort
+        uses: isort/isort-action@master
+        with:
+          sortPaths: ./src
+          configuration: "--profile black --check-only --diff"
+
+      - name: Run Black
+        uses: wearerequired/lint-action@v2
+        with:
+          auto_fix: false
+          black: true
+          black_dir: ./src
+          black_args: "--verbose"

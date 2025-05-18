@@ -1,0 +1,79 @@
+---
+name: Setup Project
+
+on: [push]
+
+jobs:
+    setup:
+      runs-on: ubuntu-latest
+      if: ${{ github.repository != 'Iamdomchap90/django-cms-template' }}
+      permissions:
+        contents: write
+      outputs: 
+        info: ${{ steps.fetch-repo-details.outputs.result }}
+      steps:
+        - name: Checkout Repo.
+          uses: actions/checkout@v3
+          with:
+            ref: ${{ github.head_ref }}
+            token: ${{ secrets.PAT }}
+
+        - name: Install CookieCutter.
+          run: |
+            python3 -m pip install --user cookiecutter
+
+        - name: Get variables for current repo from GitHub.
+          uses: actions/github-script@v4
+          id: fetch-repo-details
+          with:
+            script: |
+              const query = `query($owner:String!, $name:String!) {
+                repository(owner:$owner, name:$name) {
+                  name
+                  description
+                }
+                }`;
+                const variables = {
+                  owner: context.repo.owner,
+                  name: context.repo.repo
+                }
+                const result = await github.graphql(query, variables)
+                console.log(result)
+                return result
+
+        - name: Run Cookiecutter.
+          run: |
+            python3 -m cookiecutter . -o "$(echo $INFO | jq -r '.repository.name')" --no-input \
+            client_name="$(echo $INFO | jq -r '.repository.name' | sed -e 's/-/ /g' -e "s/\b\(.\)/\u\1/g")" \
+            repo="$(echo $INFO | jq -r '.repository.name')" \
+            live_domain="$(echo $INFO | jq -r .repository.description)"
+          env:
+            INFO: ${{ steps.fetch-repo-details.outputs.result }}
+
+        - name: Clear PWD.
+          run: |
+            rm -f cookiecutter.json
+            rm -f Makefile
+            rm -f README.md
+            rm -rf .github/
+            rm -rf '{{ cookiecutter.repo }}/'
+
+        - name: Move the generated files into PWD.
+          run: |
+            shopt -s dotglob
+            mv $(echo $INFO | jq -r '.repository.name')/$(echo $INFO | jq -r '.repository.name')/* .
+            rm -rf "$(echo $INFO | jq -r '.repository.name')"
+          env: 
+            INFO: ${{ steps.fetch-repo-details.outputs.result }}
+
+        - name: Get Client Name from GitHub Repository
+          id: client_name
+          run: |
+            echo "--- Github Repository String ---"
+            echo "$GITHUB_REPOSITORY"
+            echo
+            CLIENT_NAME=${GITHUB_REPOSITORY##*/}
+            echo "--- Sanitised Github Repository String ---"
+            echo "$CLIENT_NAME"
+            echo
+            echo "CLIENT_NAME=$CLIENT_NAME" >> $GITHUB_ENV
