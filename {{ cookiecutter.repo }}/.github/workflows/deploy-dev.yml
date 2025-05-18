@@ -1,15 +1,15 @@
-#
----
-name: Deploy To dev.Iamdomchap90.net
+# #
+# ---
+# name: Deploy To dev.Iamdomchap90.net
 
-on:
-  push:
-    branches:
-      - develop
+# on:
+#   push:
+#     branches:
+#       - develop
 
-jobs:
-  deploy:
-    uses: Iamdomchap90/github-actions/.github/workflows/deploy-dev.yml@main
-    secrets: inherit
+# jobs:
+#   deploy:
+#     uses: Iamdomchap90/github-actions/.github/workflows/deploy-dev.yml@main
+#     secrets: inherit
 
-#
+# #

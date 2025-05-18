@@ -1,7 +1,7 @@
-#
+{% raw %}
 User-agent: *
 Disallow:
 
 Sitemap: {{ request.scheme }}://{{ request.get_host }}{% url 'sitemap' %}
 
-#
+{% endraw %}

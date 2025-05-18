@@ -1,19 +1,19 @@
-#
----
-name: Lint & Autolint
+# #
+# ---
+# name: Lint & Autolint
 
-on:
-  pull_request:
-    branches:
-     - main
-     - develop
+# on:
+#   pull_request:
+#     branches:
+#      - main
+#      - develop
 
-jobs:
-  lint-and-autolint:
-    name: Isort, Flake8 & Black
-    uses: giantmade/github-actions/.github/workflows/lint.yml@main
-    secrets: inherit
-    with:
-      python-version: "3.11.x"
+# jobs:
+#   lint-and-autolint:
+#     name: Isort, Flake8 & Black
+#     uses: Iamdomchap90/github-actions/.github/workflows/lint.yml@main
+#     secrets: inherit
+#     with:
+#       python-version: "3.11.x"
 
-#
+# #
